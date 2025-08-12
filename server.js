@@ -12,13 +12,22 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// WebSocket connection handler
+// Broadcast helper function
+function broadcast(data) {
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(data);
+    }
+  });
+}
+
 wss.on("connection", (ws) => {
   console.log("Client connected");
 
   ws.on("message", (message) => {
     console.log("Received:", message.toString());
-    ws.send(`Server says: ${message}`);
+    // Broadcast received message to ALL clients
+    broadcast(`Server broadcast: ${message}`);
   });
 
   ws.on("close", () => {
@@ -26,7 +35,7 @@ wss.on("connection", (ws) => {
   });
 });
 
-const PORT = process.env.PORT || 10000; // Render provides PORT
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
